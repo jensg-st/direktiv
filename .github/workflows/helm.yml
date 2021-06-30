@@ -39,7 +39,7 @@ jobs:
         credentials: ${{ secrets.GCP_BUCKET }}
         path: ./direktiv-0.1.0.tgz
         destination: direktiv_charts/
-    - id: upload-file-tar knative
+    - id: upload-file-tar-knative
       uses: google-github-actions/upload-cloud-storage@main
       with:
         credentials: ${{ secrets.GCP_BUCKET }}
