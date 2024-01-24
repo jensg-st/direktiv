@@ -142,6 +142,12 @@ k3s-monitoring-install: ## Install the local development k3s environment.
 	WITH_MONITORING=true DEV=true ./scripts/installer.sh all
 	@$(MAKE) k3s-wait
 
+.PHONY: k3s-fluentbit-install
+k3s-fluentbit-install: k3s-uninstall
+k3s-fluentbit-install: ## Install the local development k3s environment.
+	WITH_NEWFLUENTBIT=true DEV=true ./scripts/installer.sh all
+	@$(MAKE) k3s-wait
+
 .PHONY: k3s-redeploy
 k3s-redeploy: ## Upgrade the local deployment.
 	DEV=true ./scripts/installer.sh all

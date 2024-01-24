@@ -6,6 +6,7 @@
 DEV=${DEV:-false}
 VERBOSE=${VERBOSE:-false}
 WITH_MONITORING=${WITH_MONITORING:-false}
+WITH_NEWFLUENTBIT=${WITH_NEWFLUENTBIT:-false}
 
 DIREKTIV_CONFIG=${DIREKTIV_CONFIG:-direktiv.yaml}
 
@@ -55,6 +56,7 @@ Options:
     DEV                         boolean     Install from local dev environment.
     VERBOSE                     boolean     Enable verbose script output.
     WITH_MONITORING             boolean     Enable grafana-stack installation
+    WITH_NEWFLUENTBIT           boolean     Enable for development-preview of the central logger
 
 Commands:
     all         Install everything.
@@ -491,6 +493,16 @@ EOF
   password: \"$(kubectl get secrets -n postgres direktiv-cluster-pguser-direktiv -o 'go-template={{index .data "password"}}' | base64 --decode)\"" >> $DIREKTIV_CONFIG
 }
 
+install_fluentbit() {
+    echo "Installing fluent-bit-postgres components..."
+    export PG_HOST=$(kubectl get secrets -n postgres direktiv-cluster-pguser-direktiv -o 'go-template={{index .data "host"}}' | base64 --decode)
+    export PG_PASSWORD=$(kubectl get secrets -n postgres direktiv-cluster-pguser-direktiv -o 'go-template={{index .data "password"}}' | base64 --decode)
+    envsubst '${PG_HOST} ${PG_PASSWORD}' < scripts/kubernetes/install/fluentbit/fluentbit.postgres.values.yaml > /tmp/fluentbit.values.yaml
+    helm upgrade --install fluent-bit fluent/fluent-bit --values /tmp/fluentbit.values.yaml
+    rm /tmp/fluentbit.values.yaml
+    echo "fluent-bit-postgre components installed successfully."
+}
+
 install_monitoring() {
     echo "Installing monitoring components..."
     kubectl apply -f scripts/install-monitoring.yaml
@@ -498,8 +510,7 @@ install_monitoring() {
     helm repo add fluent https://fluent.github.io/helm-charts
     helm repo update
     helm upgrade --install tempo grafana/tempo
-    helm upgrade --install fluent-bit fluent/fluent-bit --values scripts/fluentbit.values.yaml
-
+    helm upgrade --install fluent-bit fluent/fluent-bit --values scripts/kubernetes/install/fluentbit/fluentbit.values.yaml
     echo "Monitoring components installed successfully."
 }
 
@@ -619,7 +630,9 @@ install_all() {
     then 
         exit 1
     fi
-
+    if [ "$WITH_NEWFLUENTBIT" == "true" ]; then
+        install_fluentbit
+    fi
     if [ "$WITH_MONITORING" == "true" ]; then
         install_monitoring
     fi

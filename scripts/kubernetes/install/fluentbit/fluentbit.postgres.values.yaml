@@ -1,0 +1,39 @@
+config:
+  customParsers: |
+    [PARSER]
+        Name                    prefix_tail
+        Format                  regex
+        Regex                   ^(?<time>[^ ]+) (?<source>\w+ \w+) (?<entry>{[^}]*?(?:"stream":"(?<stream>[^"]+)"[^}]*))
+        Time_Key                time
+        Time_Format             %Y-%m-%dT%H:%M:%S.%L%z
+        Decode_Field_As         json log
+  inputs: |
+    [INPUT]
+        Name                    tail
+        Path                    /var/log/containers/*flow*.log
+        Mem_Buf_Limit           5MB
+        Skip_Long_Lines         Off
+        Tag                     input
+        Parser                  prefix_tail
+    [INPUT]
+        Name                    tail
+        Path                    /var/log/containers/*direktiv-sidecar*.log
+        Mem_Buf_Limit           5MB
+        Skip_Long_Lines         Off
+        Tag                     input
+        Parser                  prefix_tail
+  filters: |
+    [FILTER]
+        Name rewrite_tag
+        Match input
+        Rule $stream ^.*$ flow.$stream false
+  outputs: |
+    [OUTPUT]
+        name                    pgsql
+        match                   flow.*
+        port                    5432
+        table                   fluentbit
+        user                    direktiv
+        database                direktiv
+        host                    ${PG_HOST}
+        password                ${PG_PASSWORD}
