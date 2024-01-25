@@ -482,7 +482,7 @@ EOF
         else
             cat <<EOF >> $DIREKTIV_CONFIG
 flow:
-  logging: console
+  logging: json
 EOF
         fi
     fi
