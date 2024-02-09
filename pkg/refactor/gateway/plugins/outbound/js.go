@@ -76,7 +76,7 @@ func (js *JSOutboundPlugin) ExecutePlugin(_ *core.ConsumerFile,
 	if r.Body != nil {
 		b, err = io.ReadAll(r.Body)
 		if err != nil {
-			plugins.ReportError(w, http.StatusInternalServerError,
+			plugins.ReportError(r.Context(), w, http.StatusInternalServerError,
 				"can not set read body for js plugin", err)
 
 			return false
@@ -102,7 +102,7 @@ func (js *JSOutboundPlugin) ExecutePlugin(_ *core.ConsumerFile,
 	vm := goja.New()
 	err = vm.Set("input", resp)
 	if err != nil {
-		plugins.ReportError(w, http.StatusInternalServerError,
+		plugins.ReportError(r.Context(), w, http.StatusInternalServerError,
 			"can not set input object", err)
 
 		return false
@@ -112,7 +112,7 @@ func (js *JSOutboundPlugin) ExecutePlugin(_ *core.ConsumerFile,
 		slog.Info("js log", slog.Any("log", txt))
 	})
 	if err != nil {
-		plugins.ReportError(w, http.StatusInternalServerError,
+		plugins.ReportError(r.Context(), w, http.StatusInternalServerError,
 			"can not set log function", err)
 
 		return false
@@ -126,7 +126,7 @@ func (js *JSOutboundPlugin) ExecutePlugin(_ *core.ConsumerFile,
 		time.Sleep(time.Duration(tt) * time.Second)
 	})
 	if err != nil {
-		plugins.ReportError(w, http.StatusInternalServerError,
+		plugins.ReportError(r.Context(), w, http.StatusInternalServerError,
 			"can not set sleep function", err)
 
 		return false
@@ -137,7 +137,7 @@ func (js *JSOutboundPlugin) ExecutePlugin(_ *core.ConsumerFile,
 
 	val, err := vm.RunScript("plugin", script)
 	if err != nil {
-		plugins.ReportError(w, http.StatusInternalServerError,
+		plugins.ReportError(r.Context(), w, http.StatusInternalServerError,
 			"can not execute script", err)
 
 		return false

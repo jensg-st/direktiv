@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -108,8 +109,8 @@ func (k *ContextKey) String() string {
 	return "plugin context value " + k.name
 }
 
-func ReportError(w http.ResponseWriter, status int, msg string, err error) {
-	slog.Error("can not process plugin", slog.String("error", err.Error()))
+func ReportError(ctx context.Context, w http.ResponseWriter, status int, msg string, err error) {
+	slog.Error("can not process plugin", slog.String("error", err.Error()), "stream", ctx.Value("stream"), "trace", ctx.Value("trace"))
 	w.WriteHeader(status)
 	errMsg := fmt.Sprintf("%s: %s", msg, err.Error())
 

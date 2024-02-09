@@ -231,10 +231,12 @@ func (ep *gatewayManager) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	slogRoute := slog.With("trace", traceID(), "component", "gateway", "stream", recipient.Route.String()+"."+endpointEntry.Path)
+	ctx = context.WithValue(ctx, "stream", recipient.Route.String()+"."+endpointEntry.Path)
+	ctx = context.WithValue(ctx, "trace", traceID())
 
 	// if there are configuration errors, return it
 	if len(endpointEntry.Errors) > 0 {
-		plugins.ReportError(w, http.StatusInternalServerError, "plugin has errors",
+		plugins.ReportError(r.Context(), w, http.StatusInternalServerError, "plugin has errors",
 			fmt.Errorf(strings.Join(endpointEntry.Errors, ", ")))
 
 		return
@@ -284,7 +286,7 @@ func (ep *gatewayManager) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// if user not authenticated and anonymous access not enabled
 	if c.Username == "" && !endpointEntry.AllowAnonymous {
-		plugins.ReportError(w, http.StatusUnauthorized, "no permission",
+		plugins.ReportError(r.Context(), w, http.StatusUnauthorized, "no permission",
 			fmt.Errorf("request not authorized"))
 
 		return
@@ -325,7 +327,7 @@ func (ep *gatewayManager) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		rin, err := swapRequestResponse(r, tw)
 		if err != nil {
-			plugins.ReportError(w, http.StatusUnauthorized, "output plugin failed",
+			plugins.ReportError(r.Context(), w, http.StatusUnauthorized, "output plugin failed",
 				err)
 
 			return

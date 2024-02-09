@@ -100,7 +100,7 @@ func (tf FlowPlugin) ExecutePlugin(_ *core.ConsumerFile,
 
 	_, err := io.Copy(w, resp.Body)
 	if err != nil {
-		plugins.ReportError(w, http.StatusInternalServerError,
+		plugins.ReportError(r.Context(), w, http.StatusInternalServerError,
 			"can not serve response", err)
 
 		return false
@@ -171,7 +171,7 @@ func doDirektivRequest(requestType direktivRequestType, args map[string]string,
 	endTrace := util.TraceGWHTTPRequest(ctx, req, "direktiv/flow")
 	defer endTrace()
 	if err != nil {
-		plugins.ReportError(w, http.StatusInternalServerError,
+		plugins.ReportError(r.Context(), w, http.StatusInternalServerError,
 			"can not create request", err)
 
 		return nil
@@ -184,7 +184,7 @@ func doDirektivRequest(requestType direktivRequestType, args map[string]string,
 
 	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
-		plugins.ReportError(w, http.StatusInternalServerError,
+		plugins.ReportError(r.Context(), w, http.StatusInternalServerError,
 			"can not execute flow", err)
 
 		return nil
@@ -197,7 +197,7 @@ func doDirektivRequest(requestType direktivRequestType, args map[string]string,
 
 	if errorCode != "" {
 		msg := fmt.Sprintf("%s: %s (%s)", errorCode, errorMessage, instance)
-		plugins.ReportError(w, resp.StatusCode,
+		plugins.ReportError(r.Context(), w, resp.StatusCode,
 			"error executing workflow", fmt.Errorf(msg))
 
 		return nil
@@ -205,7 +205,7 @@ func doDirektivRequest(requestType direktivRequestType, args map[string]string,
 
 	// direktiv requests always respond with 200, workflow errors are handled in the previous check
 	if resp.StatusCode >= http.StatusMultipleChoices {
-		plugins.ReportError(w, resp.StatusCode,
+		plugins.ReportError(r.Context(), w, resp.StatusCode,
 			"can not execute flow", fmt.Errorf(resp.Status))
 
 		return nil
